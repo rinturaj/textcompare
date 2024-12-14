@@ -11,6 +11,9 @@ importers:
       '@tailwindcss/typography':
         specifier: ^0.5.15
         version: 0.5.15(tailwindcss@3.4.16)
+      monaco-editor:
+        specifier: ^0.52.2
+        version: 0.52.2
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.0.0
@@ -54,6 +57,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.9
         version: 3.4.16
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7(tailwindcss@3.4.16)
       typescript:
         specifier: ^5.0.0
         version: 5.7.2
@@ -726,6 +732,9 @@ packages:
     resolution: {integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==}
     engines: {node: '>=16 || 14 >=14.17'}
 
+  monaco-editor@0.52.2:
+    resolution: {integrity: sha512-GEQWEZmfkOGLdd3XK8ryrfWz3AIP8YymVXiPHEdewrUq7mh0qrKrfHLNCXcbB6sTnMLnOZ3ztSiKcciFUkIJwQ==}
+
   mri@1.2.0:
     resolution: {integrity: sha512-tzzskb3bG8LvYGFF/mDTpq3jpI6Q9wc3LEmBaghu+DdCssd1FakN7Bc0hVNmEyGq1bq3RgfkCb3cmQLpNPOroA==}
     engines: {node: '>=4'}
@@ -1014,6 +1023,11 @@ packages:
     engines: {node: '>=16.x', pnpm: '>=7.x'}
     peerDependencies:
       tailwindcss: '*'
+
+  tailwindcss-animate@1.0.7:
+    resolution: {integrity: sha512-bl6mpH3T7I3UFxuvDEXLxy/VuFxBk5bbzplh7tXI68mwMokNYd1t9qPBHlnyTwfa4JGC4zP516I1hYYtQ/vspA==}
+    peerDependencies:
+      tailwindcss: '>=3.0.0 || insiders'
 
   tailwindcss@3.4.16:
     resolution: {integrity: sha512-TI4Cyx7gDiZ6r44ewaJmt0o6BrMCT5aK5e0rmJ/G9Xq3w7CX/5VXl/zIPEJZFUK5VEqwByyhqNPycPlvcK4ZNw==}
@@ -1683,6 +1697,8 @@ snapshots:
 
   minipass@7.1.2: {}
 
+  monaco-editor@0.52.2: {}
+
   mri@1.2.0: {}
 
   mrmime@2.0.0: {}
@@ -1921,6 +1937,10 @@ snapshots:
   tailwind-variants@0.3.0(tailwindcss@3.4.16):
     dependencies:
       tailwind-merge: 2.5.5
+      tailwindcss: 3.4.16
+
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.16):
+    dependencies:
       tailwindcss: 3.4.16
 
   tailwindcss@3.4.16:
