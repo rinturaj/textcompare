@@ -6,7 +6,7 @@
 	import cssWorker from './../../../node_modules/monaco-editor/esm/vs/language/css/css.worker?worker';
 	import htmlWorker from './../../../node_modules/monaco-editor/esm/vs/language/html/html.worker?worker';
 	import tsWorker from './../../../node_modules/monaco-editor/esm/vs/language/typescript/ts.worker?worker';
-	// import 'monaco-editor/min/vs/editor/editor.main.css';
+	import { lightTheme, darkTheme } from './monaco-themes';
 	import './monaco.css';
 
 	let editorElement: HTMLDivElement;
@@ -14,9 +14,46 @@
 	let originalModel: monaco.editor.ITextModel | null = null;
 	let modifiedModel: monaco.editor.ITextModel | null = null;
 
+	let additionsCount = 0;
+	let deletionsCount = 0;
+
 	export let originalText = '';
 	export let modifiedText = '';
 	export let language = 'text';
+	export let readOnly = false;
+	export let isDark = true;
+
+	// Expose methods to parent component
+	export function getOriginalValue(): string {
+		return originalModel?.getValue() ?? '';
+	}
+
+	export function getModifiedValue(): string {
+		return modifiedModel?.getValue() ?? '';
+	}
+
+	export function updateContent(original: string, modified: string) {
+		loadDiffContent(original, modified, language);
+	}
+
+	function updateDiffCounts() {
+		if (diffEditor) {
+			const diffModel = diffEditor.getModel();
+			if (diffModel) {
+				const changes = diffEditor.getLineChanges() || [];
+				additionsCount = changes.reduce(
+					(acc, change) =>
+						acc + (change.modifiedEndLineNumber - change.modifiedStartLineNumber + 1),
+					0
+				);
+				deletionsCount = changes.reduce(
+					(acc, change) =>
+						acc + (change.originalEndLineNumber - change.originalStartLineNumber + 1),
+					0
+				);
+			}
+		}
+	}
 
 	function loadDiffContent(original: string, modified: string, language: string) {
 		// Dispose old models first
@@ -37,10 +74,95 @@
 				original: originalModel,
 				modified: modifiedModel
 			});
+
+			// Update counts after model is set
+			setTimeout(updateDiffCounts, 100); // Small delay to ensure diff is computed
+		}
+	}
+
+	// Add new methods for merging
+	export function acceptLeftChange(lineNumber: number) {
+		const changes = diffEditor.getLineChanges() || [];
+		const change = changes.find(
+			(c) => c.originalStartLineNumber <= lineNumber && c.originalEndLineNumber >= lineNumber
+		);
+
+		if (change && modifiedModel && originalModel) {
+			const originalText = originalModel.getValueInRange({
+				startLineNumber: change.originalStartLineNumber,
+				endLineNumber: change.originalEndLineNumber,
+				startColumn: 1,
+				endColumn: originalModel.getLineMaxColumn(change.originalEndLineNumber)
+			});
+
+			modifiedModel.pushEditOperations(
+				[],
+				[
+					{
+						range: {
+							startLineNumber: change.modifiedStartLineNumber,
+							endLineNumber: change.modifiedEndLineNumber,
+							startColumn: 1,
+							endColumn: modifiedModel.getLineMaxColumn(change.modifiedEndLineNumber)
+						},
+						text: originalText
+					}
+				],
+				() => null
+			);
+		}
+	}
+
+	export function acceptRightChange(lineNumber: number) {
+		const changes = diffEditor.getLineChanges() || [];
+		const change = changes.find(
+			(c) => c.modifiedStartLineNumber <= lineNumber && c.modifiedEndLineNumber >= lineNumber
+		);
+
+		if (change && modifiedModel && originalModel) {
+			const modifiedText = modifiedModel.getValueInRange({
+				startLineNumber: change.modifiedStartLineNumber,
+				endLineNumber: change.modifiedEndLineNumber,
+				startColumn: 1,
+				endColumn: modifiedModel.getLineMaxColumn(change.modifiedEndLineNumber)
+			});
+
+			originalModel.pushEditOperations(
+				[],
+				[
+					{
+						range: {
+							startLineNumber: change.originalStartLineNumber,
+							endLineNumber: change.originalEndLineNumber,
+							startColumn: 1,
+							endColumn: originalModel.getLineMaxColumn(change.originalEndLineNumber)
+						},
+						text: modifiedText
+					}
+				],
+				() => null
+			);
+		}
+	}
+
+	// Add methods to accept all changes
+	export function acceptAllLeft() {
+		if (originalModel && modifiedModel) {
+			modifiedModel.setValue(originalModel.getValue());
+		}
+	}
+
+	export function acceptAllRight() {
+		if (originalModel && modifiedModel) {
+			originalModel.setValue(modifiedModel.getValue());
 		}
 	}
 
 	onMount(async () => {
+		// Register custom themes
+		monaco.editor.defineTheme('customLight', lightTheme);
+		monaco.editor.defineTheme('customDark', darkTheme);
+
 		self.MonacoEnvironment = {
 			getWorker: function (_: any, label: string) {
 				if (label === 'json') {
@@ -61,28 +183,53 @@
 
 		diffEditor = monaco.editor.createDiffEditor(editorElement, {
 			automaticLayout: true,
-			theme: 'vs-dark',
+			theme: isDark ? 'customDark' : 'customLight',
 			renderSideBySide: true,
 			enableSplitViewResizing: true,
-			originalEditable: true,
+			originalEditable: !readOnly,
+
 			minimap: {
-				autohide: true,
-				enabled: true,
+				autohide: false,
+				enabled: false,
 				renderCharacters: false
 			}
 		});
 
+		// Add listener for diff updates
+		diffEditor.onDidUpdateDiff(() => {
+			updateDiffCounts();
+		});
+
 		// Load initial content
 		loadDiffContent(originalText, modifiedText, language);
+
+		// Add change listeners
+		if (originalModel) {
+			originalModel.onDidChangeContent(() => {
+				dispatchEvent(
+					new CustomEvent('originalChange', {
+						detail: getOriginalValue()
+					})
+				);
+			});
+		}
+
+		if (modifiedModel) {
+			modifiedModel.onDidChangeContent(() => {
+				dispatchEvent(
+					new CustomEvent('modifiedChange', {
+						detail: getModifiedValue()
+					})
+				);
+			});
+		}
 	});
 
 	onDestroy(() => {
-		// Clear the diff editor model first
 		if (diffEditor) {
 			diffEditor.setModel(null);
 		}
 
-		// Then dispose the models
 		if (originalModel) {
 			originalModel.dispose();
 		}
@@ -90,7 +237,6 @@
 			modifiedModel.dispose();
 		}
 
-		// Finally dispose the editor
 		if (diffEditor) {
 			diffEditor.dispose();
 		}
@@ -100,8 +246,121 @@
 	$: if (diffEditor && (originalText !== undefined || modifiedText !== undefined)) {
 		loadDiffContent(originalText, modifiedText, language);
 	}
+
+	// Watch for theme changes
+	$: if (diffEditor) {
+		monaco.editor.setTheme(isDark ? 'customDark' : 'customLight');
+	}
 </script>
 
-<div class="flex h-screen w-full flex-col">
-	<div class="flex-grow" bind:this={editorElement}></div>
+<div class="relative flex h-full w-full flex-col overflow-hidden rounded-lg">
+	<div class="absolute left-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
+		<span
+			class="rounded-md bg-red-100 px-2 py-1 text-red-800"
+			class:dark:bg-red-900={isDark}
+			class:dark:text-red-100={isDark}
+		>
+			{deletionsCount}
+		</span>
+		<button
+			class="rounded-md bg-blue-100 px-2 py-1 text-blue-800 hover:bg-blue-200"
+			class:dark:bg-blue-900={isDark}
+			class:dark:text-blue-100={isDark}
+			on:click={() => acceptAllLeft()}
+		>
+			Accept All Left
+		</button>
+	</div>
+	<div class="absolute right-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
+		<button
+			class="rounded-md bg-blue-100 px-2 py-1 text-blue-800 hover:bg-blue-200"
+			class:dark:bg-blue-900={isDark}
+			class:dark:text-blue-100={isDark}
+			on:click={() => acceptAllRight()}
+		>
+			Accept All Right
+		</button>
+		<span
+			class="rounded-md bg-green-100 px-2 py-1 text-green-800"
+			class:dark:bg-green-900={isDark}
+			class:dark:text-green-100={isDark}
+		>
+			{additionsCount}
+		</span>
+	</div>
+	<div class="editor-container flex-grow" bind:this={editorElement}></div>
 </div>
+
+<style>
+	:global(.monaco-editor) {
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+
+	:global(.monaco-editor .overflow-guard) {
+		border-radius: 0.5rem;
+	}
+
+	/* Mesh background patterns */
+	:global(.monaco-editor.vs) {
+		background-image: radial-gradient(#00000009 1px, transparent 1px);
+		background-size: 16px 16px;
+	}
+
+	:global(.monaco-editor.vs-dark) {
+		background-image: radial-gradient(#ffffff09 1px, transparent 1px);
+		background-size: 16px 16px;
+	}
+
+	/* Additional styling for editor containers */
+	:global(.monaco-editor .margin) {
+		background: transparent !important;
+	}
+
+	:global(.monaco-editor .monaco-scrollable-element) {
+		background: transparent !important;
+	}
+
+	/* Adjust content background opacity */
+	:global(.monaco-editor.vs .monaco-editor-background) {
+		background-color: rgba(255, 255, 255, 0.95) !important;
+	}
+
+	:global(.monaco-editor.vs-dark .monaco-editor-background) {
+		background-color: rgba(26, 27, 30, 0.95) !important;
+	}
+
+	/* Additional styles for the counters */
+	:global(.monaco-editor .diffOverview) {
+		margin-top: 2rem;
+	}
+
+	/* Ensure counter badges are visible */
+	:global(.monaco-editor .overflow-guard) {
+		border-radius: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	/* Add styles for the merge buttons */
+	:global(.monaco-editor .merge-button) {
+		position: absolute;
+		z-index: 100;
+		cursor: pointer;
+		padding: 2px 4px;
+		font-size: 12px;
+		border-radius: 3px;
+		background-color: var(--merge-button-bg);
+		color: var(--merge-button-fg);
+		opacity: 0;
+		transition: opacity 0.2s;
+	}
+
+	:global(.monaco-editor .merge-button:hover) {
+		opacity: 1 !important;
+	}
+
+	:global(.monaco-editor .line-insert:hover .merge-button),
+	:global(.monaco-editor .line-delete:hover .merge-button) {
+		opacity: 0.8;
+	}
+</style>

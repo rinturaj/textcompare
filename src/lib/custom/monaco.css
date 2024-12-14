@@ -7,3 +7,15 @@
 .monaco-editor .codicon {
 	font-family: 'codicon' !important;
 }
+
+.monaco-editor .monaco-editor-background {
+	background-image: linear-gradient(0deg, #e0e0e059 1px, transparent 1px),
+		linear-gradient(90deg, #e0e0e05e 1px, transparent 1px);
+	background-size: 10px 10px;
+}
+
+.monaco-editor.vs-dark .monaco-editor-background {
+	background-image: linear-gradient(0deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(255, 255, 255, 0.096) 1px, transparent 1px);
+	background-size: 10px 10px;
+}
