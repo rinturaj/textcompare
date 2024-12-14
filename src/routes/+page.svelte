@@ -33,10 +33,18 @@
 	}
 </script>
 
+<title>Text Compare Tool - Compare and Edit Texts Easily</title>
+
+<meta
+	name="description"
+	content="Use our Text Compare Tool to easily compare and edit two pieces of text side by side. Accept changes line by line or all at once for efficient editing."
+/>
+
 <div class="">
 	<Card.Root>
 		<Card.Header>
-			<Card.Title class="text-3xl font-semibold text-muted-foreground">Text Compare Tool</Card.Title
+			<Card.Title class="text-2xl font-semibold text-muted-foreground"
+				>Text Compare Tool - Compare and Edit Texts Easily</Card.Title
 			>
 			<Card.Description
 				>This tool allows you to compare two pieces of text side by side. You can edit the original

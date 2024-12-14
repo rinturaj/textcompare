@@ -27,7 +27,11 @@
 		<a href="##" class="flex items-center gap-2 text-lg font-semibold md:text-base">
 			<Package2 class="h-6 w-6" />
 		</a>
-		<a href="##" class=" transition-colors hover:text-foreground"> Quick Web Tool </a>
+		<a href="##" class=" transition-colors hover:text-foreground">
+			Text Compare Tool
+
+			<small>- v.0.0.1</small>
+		</a>
 	</nav>
 
 	<div class="flex flex-row items-center gap-2 md:ml-auto">
