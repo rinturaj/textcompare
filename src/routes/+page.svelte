@@ -1,19 +1,12 @@
 <script lang="ts">
 	import Monaco from '$lib/custom/Monaco.svelte';
+	import * as Card from '$lib/components/ui/card/index.js';
+	import Header from '../lib/custom/header.svelte';
+	import { ModeWatcher, mode } from 'mode-watcher';
 
 	let monacoComponent: Monaco;
-	let originalCode = `function example() {
-    console.log("Hello");
-    return true;
-    // Original comment
-}`;
-	let modifiedCode = `function example() {
-    console.log("Hello World!");
-    // Added a new comment
-    return false;
-    // Another change
-}`;
-	let isDarkTheme = true;
+	let originalCode = `Please Enter your text here`;
+	let modifiedCode = `Please Enter your text here`;
 
 	function handleOriginalChange(event: CustomEvent) {
 		originalCode = event.detail;
@@ -38,41 +31,29 @@
 	function handleAcceptAllRight() {
 		monacoComponent.acceptAllRight();
 	}
-
-	function updateContent() {
-		monacoComponent.updateContent('// New original content', '// New modified content');
-	}
-
-	function toggleTheme() {
-		isDarkTheme = !isDarkTheme;
-	}
 </script>
 
-<div class="container mx-auto p-4">
-	<h1 class="mb-4 text-2xl font-bold">Text Diff Viewer</h1>
-	<div class="mt-4 space-x-2">
-		<button
-			class="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-			on:click={updateContent}
-		>
-			Update Content
-		</button>
-		<button
-			class="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
-			on:click={toggleTheme}
-		>
-			Toggle Theme
-		</button>
-	</div>
-	<div class="h-[600px] rounded border border-gray-300">
-		<Monaco
-			bind:this={monacoComponent}
-			originalText={originalCode}
-			modifiedText={modifiedCode}
-			language="javascript"
-			isDark={isDarkTheme}
-			on:originalChange={handleOriginalChange}
-			on:modifiedChange={handleModifiedChange}
-		/>
-	</div>
+<div class="">
+	<Card.Root>
+		<Card.Header>
+			<Card.Title class="text-3xl font-semibold text-muted-foreground">Text Compare Tool</Card.Title
+			>
+			<Card.Description
+				>This tool allows you to compare two pieces of text side by side. You can edit the original
+				and modified texts, and accept changes as needed. Use the buttons to accept changes line by
+				line or all at once.</Card.Description
+			>
+		</Card.Header>
+		<Card.CardContent class="h-[80vh] ">
+			<Monaco
+				bind:this={monacoComponent}
+				originalText={originalCode}
+				modifiedText={modifiedCode}
+				language="javascript"
+				isDark={$mode == 'dark'}
+				on:originalChange={handleOriginalChange}
+				on:modifiedChange={handleModifiedChange}
+			/>
+		</Card.CardContent>
+	</Card.Root>
 </div>

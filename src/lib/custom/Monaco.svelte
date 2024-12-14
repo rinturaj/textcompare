@@ -8,6 +8,9 @@
 	import tsWorker from './../../../node_modules/monaco-editor/esm/vs/language/typescript/ts.worker?worker';
 	import { lightTheme, darkTheme } from './monaco-themes';
 	import './monaco.css';
+	import { contentClear } from '../utils';
+	import Button from '../components/ui/button/button.svelte';
+	import { Eraser } from 'lucide-svelte';
 
 	let editorElement: HTMLDivElement;
 	let diffEditor: monaco.editor.IStandaloneDiffEditor;
@@ -20,8 +23,11 @@
 	export let originalText = '';
 	export let modifiedText = '';
 	export let language = 'text';
-	export let readOnly = false;
 	export let isDark = true;
+
+	contentClear.subscribe((data) => {
+		if (!!data && data?.length > 0) updateContent('', '');
+	});
 
 	// Expose methods to parent component
 	export function getOriginalValue(): string {
@@ -56,27 +62,30 @@
 	}
 
 	function loadDiffContent(original: string, modified: string, language: string) {
-		// Dispose old models first
-		if (originalModel) {
-			originalModel.dispose();
-		}
-		if (modifiedModel) {
-			modifiedModel.dispose();
-		}
-
-		// Create new models
-		originalModel = monaco.editor.createModel(original, language);
-		modifiedModel = monaco.editor.createModel(modified, language);
-
-		// Set the models only if diffEditor exists
 		if (diffEditor) {
+			// First set the diff editor model to null
+			diffEditor.setModel(null);
+
+			// Then dispose old models
+			if (originalModel) {
+				originalModel.dispose();
+			}
+			if (modifiedModel) {
+				modifiedModel.dispose();
+			}
+
+			// Create new models
+			originalModel = monaco.editor.createModel(original, language);
+			modifiedModel = monaco.editor.createModel(modified, language);
+
+			// Set the new models
 			diffEditor.setModel({
 				original: originalModel,
 				modified: modifiedModel
 			});
 
 			// Update counts after model is set
-			setTimeout(updateDiffCounts, 100); // Small delay to ensure diff is computed
+			setTimeout(updateDiffCounts, 100);
 		}
 	}
 
@@ -186,7 +195,8 @@
 			theme: isDark ? 'customDark' : 'customLight',
 			renderSideBySide: true,
 			enableSplitViewResizing: true,
-			originalEditable: !readOnly,
+			originalEditable: true,
+			renderSideBySideInlineBreakpoint: 100,
 
 			minimap: {
 				autohide: false,
@@ -251,54 +261,67 @@
 	$: if (diffEditor) {
 		monaco.editor.setTheme(isDark ? 'customDark' : 'customLight');
 	}
+	function clearLeft() {
+		updateContent('', modifiedText);
+		originalText = '';
+	}
+	function clearRight() {
+		updateContent(originalText, '');
+		modifiedText = '';
+	}
 </script>
 
-<div class="relative flex h-full w-full flex-col overflow-hidden rounded-lg">
-	<div class="absolute left-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
-		<span
-			class="rounded-md bg-red-100 px-2 py-1 text-red-800"
-			class:dark:bg-red-900={isDark}
-			class:dark:text-red-100={isDark}
-		>
-			{deletionsCount}
-		</span>
-		<button
-			class="rounded-md bg-blue-100 px-2 py-1 text-blue-800 hover:bg-blue-200"
-			class:dark:bg-blue-900={isDark}
-			class:dark:text-blue-100={isDark}
-			on:click={() => acceptAllLeft()}
-		>
-			Accept All Left
-		</button>
+<div class="h-full w-full overflow-hidden">
+	<div class="flex justify-between p-2">
+		<div class=" left-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
+			<span
+				class="rounded-md bg-red-100 px-3 py-1 text-red-800"
+				class:dark:bg-red-900={isDark}
+				class:dark:text-red-100={isDark}
+			>
+				- {deletionsCount} Removal
+			</span>
+			<Button size="sm" variant="outline" class="" on:click={() => acceptAllLeft()}
+				>Accept All Left</Button
+			>
+			<Button class="" size="sm" color="primary" variant="outline" on:click={clearLeft}>
+				<Eraser class="m-1" size={14} />
+				Clear</Button
+			>
+		</div>
+		<div class=" right-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
+			<Button class="" size="sm" color="primary" variant="outline" on:click={clearRight}>
+				<Eraser class="m-1" size={14} />
+
+				Clear</Button
+			>
+
+			<Button size="sm" variant="outline" class="" on:click={() => acceptAllRight()}
+				>Accept All Right</Button
+			>
+
+			<span
+				class="rounded-md bg-green-100 px-3 py-1 text-green-800"
+				class:dark:bg-green-900={isDark}
+				class:dark:text-green-100={isDark}
+			>
+				+ {additionsCount} Addition
+			</span>
+		</div>
 	</div>
-	<div class="absolute right-2 top-2 z-10 flex items-center space-x-2 text-sm font-medium">
-		<button
-			class="rounded-md bg-blue-100 px-2 py-1 text-blue-800 hover:bg-blue-200"
-			class:dark:bg-blue-900={isDark}
-			class:dark:text-blue-100={isDark}
-			on:click={() => acceptAllRight()}
-		>
-			Accept All Right
-		</button>
-		<span
-			class="rounded-md bg-green-100 px-2 py-1 text-green-800"
-			class:dark:bg-green-900={isDark}
-			class:dark:text-green-100={isDark}
-		>
-			{additionsCount}
-		</span>
+	<div class="relative flex h-full w-full flex-col overflow-hidden rounded-lg">
+		<div class="editor-container flex-grow" bind:this={editorElement}></div>
 	</div>
-	<div class="editor-container flex-grow" bind:this={editorElement}></div>
 </div>
 
 <style>
 	:global(.monaco-editor) {
-		border-radius: 0.5rem;
+		/* border-radius: 0.5rem; */
 		overflow: hidden;
 	}
 
 	:global(.monaco-editor .overflow-guard) {
-		border-radius: 0.5rem;
+		/* border-radius: 0.5rem; */
 	}
 
 	/* Mesh background patterns */
@@ -337,7 +360,7 @@
 
 	/* Ensure counter badges are visible */
 	:global(.monaco-editor .overflow-guard) {
-		border-radius: 0.5rem;
+		/* border-radius: 0.5rem; */
 		margin-top: 1rem;
 	}
 
@@ -349,8 +372,8 @@
 		padding: 2px 4px;
 		font-size: 12px;
 		border-radius: 3px;
-		background-color: var(--merge-button-bg);
-		color: var(--merge-button-fg);
+		/* background-color: var(--merge-button-bg); */
+		/* color: var(--merge-button-fg); */
 		opacity: 0;
 		transition: opacity 0.2s;
 	}
