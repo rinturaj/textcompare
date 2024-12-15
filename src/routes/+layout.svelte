@@ -2,10 +2,6 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import '../app.css';
 	import Header from '../lib/custom/header.svelte';
-	import * as Card from '../lib/components/ui/card/index';
-	import Input from '../lib/components/ui/input/input.svelte';
-	import Button from '../lib/components/ui/button/button.svelte';
-	import Checkbox from '../lib/components/ui/checkbox/checkbox.svelte';
 	let { children } = $props();
 </script>
 
@@ -21,10 +17,14 @@
 			data-x-chunk-container="chunk-container after:right-0"
 		>
 			<div class="mx-auto grid w-full gap-2">
-				<h1 class="text-xl font-semibold">Tabs</h1>
+				<h1 class="text-xl font-semibold">
+					Welcome to
+
+					<span class="font-extrabold text-black">TextCompare </span>
+				</h1>
 			</div>
 
-			<a href="##" class="font-semibold text-primary"> New </a>
+			<a href="##" class="font-semibold text-primary"> Exciting new features are coming soon! 🚀</a>
 			<!-- <a href="##">Security</a>
 			<a href="##">Integrations</a>
 			<a href="##">Support</a>

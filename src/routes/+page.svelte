@@ -7,6 +7,7 @@
 	let monacoComponent: Monaco;
 	let originalCode = `Please Enter your text here`;
 	let modifiedCode = `Please Enter your text here`;
+	let isLoading = true;
 
 	function handleOriginalChange(event: CustomEvent) {
 		originalCode = event.detail;
@@ -16,20 +17,9 @@
 		modifiedCode = event.detail;
 	}
 
-	function handleAcceptLeft(lineNumber: number) {
-		monacoComponent.acceptLeftChange(lineNumber);
-	}
-
-	function handleAcceptRight(lineNumber: number) {
-		monacoComponent.acceptRightChange(lineNumber);
-	}
-
-	function handleAcceptAllLeft() {
-		monacoComponent.acceptAllLeft();
-	}
-
-	function handleAcceptAllRight() {
-		monacoComponent.acceptAllRight();
+	function handleMonacoLoad(event: CustomEvent) {
+		console.log('Monaco loaded:', event.detail);
+		isLoading = false;
 	}
 </script>
 
@@ -52,7 +42,10 @@
 				line or all at once.</Card.Description
 			>
 		</Card.Header>
-		<Card.CardContent class="h-[80vh] ">
+		<Card.CardContent class="relative h-[80vh]">
+			{#if isLoading}
+				<div>loading...</div>
+			{/if}
 			<Monaco
 				bind:this={monacoComponent}
 				originalText={originalCode}
@@ -61,6 +54,7 @@
 				isDark={$mode == 'dark'}
 				on:originalChange={handleOriginalChange}
 				on:modifiedChange={handleModifiedChange}
+				on:load={handleMonacoLoad}
 			/>
 		</Card.CardContent>
 	</Card.Root>

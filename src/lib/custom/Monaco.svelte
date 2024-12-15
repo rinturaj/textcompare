@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, createEventDispatcher } from 'svelte';
 	import * as monaco from 'monaco-editor';
 	import editorWorker from './../../../node_modules/monaco-editor/esm/vs/editor/editor.worker?worker';
 	import jsonWorker from './../../../node_modules/monaco-editor/esm/vs/language/json/json.worker?worker';
@@ -167,7 +167,9 @@
 		}
 	}
 
-	onMount(async () => {
+	const dispatch = createEventDispatcher();
+
+	onMount(() => {
 		// Register custom themes
 		monaco.editor.defineTheme('customLight', lightTheme);
 		monaco.editor.defineTheme('customDark', darkTheme);
@@ -216,23 +218,34 @@
 		// Add change listeners
 		if (originalModel) {
 			originalModel.onDidChangeContent(() => {
-				dispatchEvent(
-					new CustomEvent('originalChange', {
-						detail: getOriginalValue()
-					})
-				);
+				dispatch('originalChange', getOriginalValue());
 			});
 		}
 
 		if (modifiedModel) {
 			modifiedModel.onDidChangeContent(() => {
-				dispatchEvent(
-					new CustomEvent('modifiedChange', {
-						detail: getModifiedValue()
-					})
-				);
+				dispatch('modifiedChange', getModifiedValue());
 			});
 		}
+		// Dispatch load event when Monaco is ready
+		dispatch('load', 'Monaco is ready');
+
+		return () => {
+			if (diffEditor) {
+				diffEditor.setModel(null);
+			}
+
+			if (originalModel) {
+				originalModel.dispose();
+			}
+			if (modifiedModel) {
+				modifiedModel.dispose();
+			}
+
+			if (diffEditor) {
+				diffEditor.dispose();
+			}
+		};
 	});
 
 	onDestroy(() => {
