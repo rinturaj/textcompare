@@ -1,17 +1,9 @@
 <script lang="ts">
-	import CircleUser from 'lucide-svelte/icons/circle-user';
-	import Menu from 'lucide-svelte/icons/menu';
 	import Package2 from 'lucide-svelte/icons/package-2';
-	import Search from 'lucide-svelte/icons/search';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	// import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import { Input } from '$lib/components/ui/input/index.js';
-	import * as Sheet from '$lib/components/ui/sheet/index.js';
-	import { Moon, Plus, Sun, Upload } from 'lucide-svelte';
+	import { Moon, Sun } from 'lucide-svelte';
 	import { LifeBuoy } from 'lucide-svelte';
-	import { Github } from 'lucide-svelte';
-	import { toast } from 'svelte-sonner';
 	import { toggleMode } from 'mode-watcher';
 	import { contentClear } from '../utils';
 
@@ -24,10 +16,10 @@
 	<nav
 		class="hidden w-full gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6"
 	>
-		<a href="##" class="flex items-center gap-2 text-lg font-semibold md:text-base">
+		<a href="./" class="flex items-center gap-2 text-lg font-semibold md:text-base">
 			<Package2 class="h-6 w-6" />
 		</a>
-		<a href="##" class=" transition-colors hover:text-foreground">
+		<a href="./" class=" transition-colors hover:text-foreground">
 			Text Compare Tool
 
 			<small>- v.0.0.1</small>
